@@ -3,7 +3,7 @@
 
 In your page-template where you want blocks add this (example: Left column) in page.php:
 
-```html
+```php
 <?php // Block Areas: left ?>
 
 <?php get_blocks('left'); ?>
