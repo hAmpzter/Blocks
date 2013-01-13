@@ -30,9 +30,9 @@ add_action('add_meta_boxes', 'blocks_register_metaboxes');
 function blocks_save_blocks( $post_id ) {
 	global $defined_areas;
 
-	$settings = get_option('blocks_settings');
+	$settings = get_option('blocks');
 
-	$areas = $settings['blocks_area'];
+	$areas = $settings['area'];
 
 	// Get the Blocks id:s
 	$blocks_id = get_post_meta( $post_id->ID, '_blocks', true );

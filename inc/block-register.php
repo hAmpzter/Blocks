@@ -51,14 +51,14 @@ add_action('init', 'blocks_register_custom_post');
 
 function blocks_activate_settings() {
 
-	$settings = get_option('blocks_activate_settings');
+	$settings = get_option('blocks');
 
 	if( ! $settings ) {
 
 		$settings = array(
-			'blocks_cache'   => '0',
-			'blocks_edit'	 => '1',
-			'blocks_area'    => array(
+			'cache'   => '0',
+			'edit'	 => '1',
+			'area'    => array(
 				array(
 					'area' 	=> 'left',	
 					'name' 	=> __('Left column', 'blocks'),
@@ -71,7 +71,7 @@ function blocks_activate_settings() {
 				),
 			),
 		);
-		add_option( "blocks_settings", $settings, '', 'yes' );
+		add_option( "blocks", $settings, '', 'yes' );
 	}
 }
 

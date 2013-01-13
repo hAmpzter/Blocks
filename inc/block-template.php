@@ -3,8 +3,8 @@
 /**
  * This is the default block-template
  * If you want to override the output
- * you can add a file called something
- * like blocks-templatename.php to your
+ * you can add a file called 
+ * blocks-{templatename}.php to your
  * theme-root and in that file add:
  *
  * Block Template: My block template
@@ -21,8 +21,8 @@ function get_blocks( $area, $id = null ) {
 	// Get the blocks id:s
 	$blocks_id = get_post_meta( $post->ID, '_blocks', true );
 
-	// Get all the settings from settingspage
-	$settings = get_option( 'blocks_settings' );
+	// Get all the settings
+	$settings = get_option( 'blocks' );
 
 	if ( false === ( $query = get_transient( 'blocks_cache_'. $post->ID ) ) ) {
 
@@ -46,8 +46,8 @@ function get_blocks( $area, $id = null ) {
     	}
     }
 
-	if( $settings['blocks_cache'] ) {
-		set_transient('blocks_cache_'. $post->ID, $query);
+	if( $settings['cache'] ) {
+		set_transient('cache_'. $post->ID, $query);
 	}
 
 	$i = 1;
@@ -62,11 +62,10 @@ function get_blocks( $area, $id = null ) {
 			include( TEMPLATEPATH . '/'. $blocks_meta['template'] );
 		} else {
 
-			// Hook into blocks_template if you want to modify 
-			// The template output
+			// Hook into blocks_template if you want to modify the template output
 			do_action('blocks_template');
 
-			$output .= '<div class="block block-'. $i++ .''. ( ! empty( $settings['blocks_class'] ) ? $settings['blocks_class'] : '' ) .''. ( ! empty( $blocks_meta['class'] ) ? $blocks_meta['class'] : '' ) .'">';
+			$output .= '<div class="block block-'. $i++ .''. ( ! empty( $settings['class'] ) ? $settings['class'] : '' ) .''. ( ! empty( $blocks_meta['class'] ) ? $blocks_meta['class'] : '' ) .'">';
 				
 				$output .= '<div class="block-holder">';
 
@@ -87,12 +86,12 @@ function get_blocks( $area, $id = null ) {
 					}
 
 					$output .= '<div class="block-content">';
-						$output .= apply_filters('the_content', get_the_content());
+						$output .= apply_filters( 'the_content', get_the_content() );
 					$output .= '</div>';
 
 				$output .= '</div>';
 
-				if( is_user_logged_in() && isset( $settings['blocks_edit'] ) ) {
+				if( is_user_logged_in() && isset( $settings['edit'] ) ) {
 					$output .= '<a href="'. get_edit_post_link( $post->ID ) .'" class="block-edit-link" title="'. __('Edit block', 'blocks') .'">'. __( 'Edit', 'blocks' ) .'</a>';
 				}
 

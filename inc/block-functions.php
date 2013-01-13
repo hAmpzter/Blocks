@@ -28,9 +28,9 @@ function blocks_flush_transients() {
 
 	$post_id = isset( $_POST['post_id'] );
 	// Get all the settings from settingspage
-	$settings = get_option( 'blocks_settings' );
+	$settings = get_option( 'blocks' );
 
-	if( $settings['blocks_cache'] ) {
+	if( $settings['cache'] ) {
 		delete_transient( 'blocks_cache_' . $post_id );
 
 		if( isset( $_POST['post_type'] ) == 'blocks' || isset( $_POST['action'] ) == 'empty_cache' ) {
@@ -177,7 +177,7 @@ add_shortcode( 'block', 'blocks_shortcode' );
 function blocks_get_defined_areas() {
 	global $post, $pagenow;
 
-	$settings = get_option('blocks_settings');
+	$settings = get_option('blocks');
 
 	if( $pagenow == 'post.php' ) {
 
@@ -284,7 +284,7 @@ function blocks_uninstall_settings() {
 	} 
 
 	// Delete all data
-	delete_option('blocks_settings');
+	delete_option('blocks');
 
 	// Delete postmeta contains _block
 	$wpdb->query( 'DELETE FROM ' . $wpdb->prefix . 'postmeta WHERE meta_key = "_blocks" ' );

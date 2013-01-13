@@ -22,8 +22,8 @@ add_action('add_meta_boxes', 'blocks_metadata');
 function blocks_single_pages() {
 	global $wpdb ,$post, $defined_areas;
 
-	$settings   = get_option('blocks_settings');
-	$areas      = $settings['blocks_area'];
+	$settings   = get_option('blocks');
+	$areas      = $settings['area'];
 	$types 	    = blocks_post_types();
 	$type_areas = array();
 	$postobject = $post; // Make a clone of the Post-Object

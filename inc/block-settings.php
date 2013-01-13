@@ -7,14 +7,7 @@
  */
 
 function blocks_settings_page_init() {
-	$settings_page = add_submenu_page( 
-		'edit.php?post_type=blocks', 
-		__('Settings', 'blocks'), 
-		__('Settings', 'blocks'), 
-		'manage_options', 
-		'blocks-settings', 
-		'blocks_settings_page' 
-		);
+	$settings_page = add_submenu_page( 'edit.php?post_type=blocks', __('Settings', 'blocks'), __('Settings', 'blocks'), 'manage_options', 'blocks-settings', 'blocks_settings_page' );
 	add_action( "load-{$settings_page}", 'blocks_load_settings_page' );
 }
 add_action( 'admin_menu', 'blocks_settings_page_init' );
@@ -44,52 +37,48 @@ function blocks_load_settings_page() {
  */
 
 function blocks_save_plugin_options() {
-	$settings = get_option( 'blocks_settings' );
+	$settings = get_option( 'blocks' );
 
-		$tmp_area = ( isset( $_POST['blocks_area'] ) ? $_POST['blocks_area'] : '' );
-			
-		if( $tmp_area ) { 
+	$tmp_area = ( isset( $_POST['area'] ) ? $_POST['area'] : '' );
+		
+	if( $tmp_area ) { 
 
-			$areas   = array();
+		$areas   = array();
 
-			for ( $i = 0; $i < count( $tmp_area['area'] ); $i++ ) {
-				$area  = $tmp_area['area'][$i];
-				$name  = $tmp_area['name'][$i];
-				$desc  = $tmp_area['desc'][$i];
+		for ( $i = 0; $i < count( $tmp_area['area'] ); $i++ ) {
+			$area  = $tmp_area['area'][$i];
+			$name  = $tmp_area['name'][$i];
+			$desc  = $tmp_area['desc'][$i];
 
-				if( blocks_check_area_values( $area, $name, $desc ) ) {
-					$areas[] = array(
-						'area' => $area, 
-						'name' => $name, 
-						'desc' => $desc
-					);
-				}
+			if( blocks_check_area_values( $area, $name, $desc ) ) {
+				$areas[] = array(
+					'area' => $area, 
+					'name' => $name, 
+					'desc' => $desc
+				);
 			}
 		}
+	}
 
-		if ( $_GET['page'] == 'blocks-settings' ) { 
-			if ( isset ( $_GET['tab'] ) ) {
-		        $tab = $_GET['tab']; 
-		    } else {
-		        $tab = 'general'; 
-	    }
+	if ( $_GET['page'] == 'blocks-settings' ) { 
+		if ( isset ( $_GET['tab'] ) ) {
+	        $tab = $_GET['tab']; 
+	    } else {
+	        $tab = 'general'; 
+    	}
 
 	    switch ( $tab ) { 
-	    	case 'general' : 	  
-	    	
-				$settings['blocks_area'] = $areas;
-
+	    	case 'general' : 	  	
+				$settings['area'] = $areas;
 			break;
 	        case 'advanced' :
-
-	        	$settings['blocks_class'] = ( isset( $_POST['blocks_class'] ) ? $_POST['blocks_class'] : '' );
-	        	$settings['blocks_cache'] = ( isset( $_POST['blocks_cache'] ) ? $_POST['blocks_cache'] : '' );
-	        	$settings['blocks_edit']  = ( isset( $_POST['blocks_edit'] ) ? $_POST['blocks_edit'] : '' );
-	        	
+	        	$settings['class'] = ( isset( $_POST['class'] ) ? $_POST['class'] : '' );
+	        	$settings['cache'] = ( isset( $_POST['cache'] ) ? $_POST['cache'] : '' );
+	        	$settings['edit']  = ( isset( $_POST['edit'] ) ? $_POST['edit'] : '' );
 			break; 
 	    }
 	}
-	update_option( 'blocks_settings', $settings );
+	update_option( 'blocks', $settings );
 }
 
 
@@ -128,7 +117,7 @@ function blocks_admin_tabs( $current = 'general' ) {
  */
 
 function blocks_settings_page() {
-	$settings = get_option( 'blocks_settings' );
+	$settings = get_option( 'blocks' );
 	?>	
 	<div class="wrap">		
 		<?php
@@ -162,8 +151,8 @@ function blocks_settings_page() {
 
 						case 'general' : 
 
-						if( isset( $settings['blocks_area'] ) ) {
-							$areas = $settings['blocks_area'];
+						if( isset( $settings['area'] ) ) {
+							$areas = $settings['area'];
 						} else {
 							$areas = array();
 						}
@@ -220,10 +209,10 @@ function blocks_settings_page() {
 
 													<?php for ( $i = 0; $i < count( $areas ); $i++ ) : ?>
 														<tr class="blocks-area-row">
-															<td><input type="text" name="blocks_area[area][]" value="<?php if( ! $i == 0 ) echo $areas[$i]['area']; ?>" <?php if( $i == 0 ) echo 'placeholder="'. __('Key','blocks') . '"'; ?> /></td>
-															<td><input type="text" name="blocks_area[name][]" value="<?php if( ! $i == 0 ) echo $areas[$i]['name']; ?>" <?php if( $i == 0 ) echo 'placeholder="'. __('Name','blocks') . '"'; ?> /></td>
+															<td><input type="text" name="area[area][]" value="<?php if( ! $i == 0 ) echo $areas[$i]['area']; ?>" <?php if( $i == 0 ) echo 'placeholder="'. __('Key','blocks') . '"'; ?> /></td>
+															<td><input type="text" name="area[name][]" value="<?php if( ! $i == 0 ) echo $areas[$i]['name']; ?>" <?php if( $i == 0 ) echo 'placeholder="'. __('Name','blocks') . '"'; ?> /></td>
 															<td>
-																<input type="text" name="blocks_area[desc][]" value="<?php if( ! $i == 0 ) echo $areas[$i]['desc']; ?>" <?php if( $i == 0 ) echo 'placeholder="'. __('Description','blocks') . '"'; ?> />
+																<input type="text" name="area[desc][]" value="<?php if( ! $i == 0 ) echo $areas[$i]['desc']; ?>" <?php if( $i == 0 ) echo 'placeholder="'. __('Description','blocks') . '"'; ?> />
 																<?php if( ! $i == 0 ): ?>
 																	<a class="button blocks-remove-area"><?php _e('Remove', 'blocks'); ?></a>
 																<?php endif; ?>
@@ -259,10 +248,10 @@ function blocks_settings_page() {
 										</p>
 									</th>
 									<td>
-										<input id="blocks_cache" name="blocks_cache" type="checkbox" value="1" <?php checked( $settings['blocks_cache'], 1 ); ?> /> 
+										<input id="cache" name="cache" type="checkbox" value="1" <?php checked( $settings['cache'], 1 ); ?> /> 
 									</td>
 
-									<?php if( $settings['blocks_cache'] ) : ?>
+									<?php if( $settings['cache'] ) : ?>
 										<td class="empty-cache-holder">
 											<a href="#" class="button empty-cache"><?php _e('Empty cache'); ?></a>
 										</td>
@@ -275,7 +264,7 @@ function blocks_settings_page() {
 										<p><?php _e('Enable this if you want a link on eatch block in the front-end that goes to the edit-screen of the block','blocks'); ?>.</p>
 									</th>
 									<td>
-										<input id="blocks-edit" name="blocks_edit" type="checkbox" value="1" <?php checked( $settings['blocks_edit'], 1 ); ?> /> 
+										<input id="blocks-edit" name="edit" type="checkbox" value="1" <?php checked( $settings['edit'], 1 ); ?> /> 
 									</td>
 								</tr>
 
@@ -285,7 +274,7 @@ function blocks_settings_page() {
 										<p><?php _e('Here you can add you own css-class that will be printed on the front-end', 'blocks'); ?>.</p>
 									</th>
 									<td>
-										<input id="blocks-class" name="blocks_class" type="text" value="<?php if ( isset( $settings["blocks_class"] ) ) echo $settings["blocks_class"]; ?>" placeholder="<?php _e('class', 'blocks'); ?>" />
+										<input id="blocks-class" name="class" type="text" value="<?php if ( isset( $settings["class"] ) ) echo $settings["class"]; ?>" placeholder="<?php _e('class', 'blocks'); ?>" />
 									</td>
 								</tr>
 
