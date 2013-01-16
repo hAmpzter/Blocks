@@ -55,7 +55,7 @@ add_action('plugins_loaded', 'blocks_define_constants');
  * @since 0.1
  */
 
-load_plugin_textdomain( 'blocks', false, basename( __FILE__ ) . '/lang' );
+load_plugin_textdomain( 'blocks', false, dirname( plugin_basename( __FILE__ ) ) . '/lang/' );
 
 
 /**

@@ -71,29 +71,11 @@ function blocks_single_pages() {
 	// Remove duplicates
 	$pageTemplatesWithAreas = array_unique($pageTemplatesWithAreas);
 
-	//DEBUG
-	echo "<pre>";
-
 	$postsWithoutAreas = array();
 		
-	// Get all post_id:s that have this post_id(block_id) and area
-	// Remove when WP_Query adds support for REGEX in meta_query
-	// http://core.trac.wordpress.org/ticket/18736
-	// $sql = 'SELECT post_id FROM kwido_postmeta WHERE meta_value REGEXP \'"'. $area['area'] .'";a:[[:digit:]]+:{[^}]*"'. $postobject->ID .'"\'';
-
-	// // Get the SQL-result
-	// $results = $wpdb->get_results( $sql, ARRAY_A );
-
-	// $post_ids = array();
-
-	// foreach ( $results as $result ) {
-	// 	$post_ids[] = $result['post_id'];
-	// }
-
 	$args = array(
 		'post_type'	   => $types,
-		'numberposts'  => '-1'//,
-		//'post__not_in' => $post_ids
+		'numberposts'  => '-1'
 	);
 	
 	$postsWithoutAreas = get_posts( $args );
@@ -101,10 +83,9 @@ function blocks_single_pages() {
 	$args = array(
 	   'post_type'    => 'page',
 	   'meta_key'     => '_wp_page_template',
-	   //'post__not_in' => $post_ids,
 	   'meta_query'   => array(
 	       array(
-	           'value' => array_keys($pageTemplatesWithAreas)
+	           'value' => array_keys( $pageTemplatesWithAreas )
 	       )
 	   	)
 	 );
@@ -115,10 +96,10 @@ function blocks_single_pages() {
 	$postsWithoutAreas = array_merge( $postsWithoutAreas, $templatePages->posts );
 
 	// Variable not needed any more
-	unset($templatePages);
+	unset( $templatePages );
 
 	// Sort array by key in reverse order to get latest first
-	krsort($postsWithoutAreas);
+	krsort( $postsWithoutAreas );
 	
 	$postsWithAreas = array();
 
@@ -154,18 +135,9 @@ function blocks_single_pages() {
 		}
 	}
 
-	// $children = array();
-	// foreach ( $postsWithoutAreas as $post ) {
-	//     $children[$post->post_parent][] = $post;
-	// }
-
 	// Disabled childrens-list with a simple hack! ;)
 	$postsNotAdded[0] = $postsWithoutAreas;
 	$postsAdded[0] = $postsWithAreas;
-
-	//print_r($templates);
-
-	echo "</pre>";
 
 	if( count( $postsNotAdded ) > 0 || count( $postsAdded ) > 0 ) {
 
@@ -256,17 +228,7 @@ function blocks_create_child_tree( $parent_id, &$output, $children, $templates, 
 					</span>
 				';
 			} else {
-				// Example output
-				// $output .= '<li data-id="1" data-area="left"></span><p>News 1</p><span title="Add this post" class="add"></span><span class="delete"></span><span title="Add on areas" class="add-areas">Add on areas</span><span title="Remove" class="delete"></span>';
-				// 	$output .= '<ul class="areas">';
-				// 		$output .= '<span></span>';
-				// 		$output .= '<li title="Add on Left column"><span class="saved"></span>Left column</li>';
-				// 		$output .= '<li title="Add on Right column"><span></span>Right column</li>';
-				// 		$output .= '<li title="Add on Header"><span></span>Header</li>';
-				// 	$output .= '</ul>';
-				// $output .= '</li>';
-
-				$output .= '<li data-id="'. $child->ID .'"><p>'. get_the_title( $child->ID ) .'</p><span>'. $child->post_type .'<span title="Add this post" class="add"></span><span class="delete"></span><span title="Add on areas" class="add-areas">Add on areas</span><span title="Remove" class="delete"></span>';
+				$output .= '<li data-id="'. $child->ID .'"></span><p>'. get_the_title( $child->ID ) .'</p><span title="'. __('Add this', '') .' '. $child->post_type .'" class="add"></span><span class="delete"></span><span title="Add on areas" class="add-areas">'. __('Add on areas', 'blocks') .'</span><span title="Remove" class="delete"></span>';
 				
 				$output .= '<ul class="areas">';
 				$output .= '<span></span>';
