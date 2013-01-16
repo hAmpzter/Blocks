@@ -39,21 +39,20 @@ function blocks_load_settings_page() {
 function blocks_save_plugin_options() {
 	$settings = get_option( 'blocks' );
 
-	$tmp_area = ( isset( $_POST['area'] ) ? $_POST['area'] : '' );
+	$tmp_area = ( isset( $_POST['areas'] ) ? $_POST['areas'] : '' );
 		
 	if( $tmp_area ) { 
 
 		$areas   = array();
 
-		for ( $i = 0; $i < count( $tmp_area['area'] ); $i++ ) {
+		for ( $i = count( $tmp_area['areas'] ) - 1; $i > 0; $i-- ) {
 			$area  = $tmp_area['area'][$i];
 			$name  = $tmp_area['name'][$i];
 			$desc  = $tmp_area['desc'][$i];
 
-			if( blocks_check_area_values( $area, $name, $desc ) ) {
-				$areas[] = array(
-					'area' => $area, 
-					'name' => $name, 
+			if( !array_key_exists($area, $areas) && blocks_check_area_values( $area, $name, $desc ) ) {
+				$areas[$area] = array(
+					'name' => $name,
 					'desc' => $desc
 				);
 			}
@@ -69,7 +68,7 @@ function blocks_save_plugin_options() {
 
 	    switch ( $tab ) { 
 	    	case 'general' : 	  	
-				$settings['area'] = $areas;
+				$settings['areas'] = $areas;
 			break;
 	        case 'advanced' :
 	        	$settings['class'] = ( isset( $_POST['class'] ) ? $_POST['class'] : '' );
@@ -151,14 +150,18 @@ function blocks_settings_page() {
 
 						case 'general' : 
 
-						if( isset( $settings['area'] ) ) {
-							$areas = $settings['area'];
+						if( isset( $settings['areas'] ) ) {
+							$areas = $settings['areas'];
 						} else {
 							$areas = array();
 						}
 
-						// Add an empty input-row
-						array_unshift( $areas, '' );			
+						reset($areas);
+						$firstBlock = 'example';
+						if(count($areas) > 0)
+						{
+							$firstBlock = key($areas);
+						}
 						?>
 
 						<table class="form-table">
@@ -183,11 +186,11 @@ function blocks_settings_page() {
 												<li><?php _e("Go to your theme folder and select the template where you want to show blocks, e.g page.php",'blocks'); ?></li>
 												<li>
 													<?php _e("In the top of the file add a comment like this:", 'blocks'); ?> <br />
-													<code><span><</span><span>php</span> // Blocks Areas: <?php echo $areas[1]['area']; ?> ?></code>
+													<code><span><</span><span>php</span> // Blocks Areas: <?php echo $firstBlock; ?> ?></code>
 												</li>
 												<li>
 													<?php _e("Then you need to define where in that file you want the blocks, call this function:", 'blocks'); ?> <br />
-													<code><span><</span><span>?php</span> get_blocks( "<?php echo $areas[1]['area']; ?>" ); ?></code>
+													<code><span><</span><span>?php</span> get_blocks( "<?php echo $firstBlock; ?>" ); ?></code>
 												</li>
 												<li><?php _e('Go and', 'blocks'); ?> <a target="_blank" href="post-new.php?post_type=blocks"><?php _e('create', 'blocks'); ?></a> <?php _e('a block and add it to a <b>Page</b>', 'blocks'); ?></li>
 												<li><?php _e("Read more about how to use and customize blocks in the",'blocks'); ?> <a target"_blank" href="#"><?php _e('Documentation'); ?></a></li>
@@ -206,19 +209,21 @@ function blocks_settings_page() {
 													</tr>
 												</thead>
 												<tbody>
-
-													<?php for ( $i = 0; $i < count( $areas ); $i++ ) : ?>
+													<tr class="blocks-area-row">
+														<td><input type="text" name="area[area][]" placeholder="<?php _e('Key','blocks'); ?>" /></td>
+														<td><input type="text" name="area[name][]" placeholder="<?php _e('Name','blocks'); ?>" /></td>
+														<td><input type="text" name="area[desc][]" placeholder="<?php _e('Description','blocks'); ?>" /></td>
+													</tr>
+													<?php foreach ($areas as $areaKey => $area) : ?>
 														<tr class="blocks-area-row">
-															<td><input type="text" name="area[area][]" value="<?php if( ! $i == 0 ) echo $areas[$i]['area']; ?>" <?php if( $i == 0 ) echo 'placeholder="'. __('Key','blocks') . '"'; ?> /></td>
-															<td><input type="text" name="area[name][]" value="<?php if( ! $i == 0 ) echo $areas[$i]['name']; ?>" <?php if( $i == 0 ) echo 'placeholder="'. __('Name','blocks') . '"'; ?> /></td>
+															<td><input type="text" name="area[area][]" value="<?php echo $areaKey; ?>" /></td>
+															<td><input type="text" name="area[name][]" value="<?php echo $area['name']; ?>" /></td>
 															<td>
-																<input type="text" name="area[desc][]" value="<?php if( ! $i == 0 ) echo $areas[$i]['desc']; ?>" <?php if( $i == 0 ) echo 'placeholder="'. __('Description','blocks') . '"'; ?> />
-																<?php if( ! $i == 0 ): ?>
-																	<a class="button blocks-remove-area"><?php _e('Remove', 'blocks'); ?></a>
-																<?php endif; ?>
+																<input type="text" name="area[desc][]" value="<?php echo $area['desc']; ?>" />
+																<a class="button blocks-remove-area"><?php _e('Remove', 'blocks'); ?></a>
 															</td>
-														</tr>	
-													<?php endfor; ?>
+														</tr>
+													<?php endforeach; ?>
 													
 												</tbody>
 											</table>

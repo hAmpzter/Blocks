@@ -58,20 +58,18 @@ function blocks_activate_settings() {
 		$settings = array(
 			'cache'   => '0',
 			'edit'	 => '1',
-			'area'    => array(
-				array(
-					'area' 	=> 'left',	
+			'areas'    => array(
+				'left' => array(
 					'name' 	=> __('Left column', 'blocks'),
 					'desc'	=> __('This is the left sidebar', 'blocks')
 				),
-				array(
-					'area' 	=> 'right',	
+				'right' => array(
 					'name' 	=> __('Right column', 'blocks'),
 					'desc'	=> __('This is the right sidebar', 'blocks')
 				),
 			),
 		);
-		add_option( "blocks", $settings, '', 'yes' );
+		add_option( 'blocks', $settings, '', 'yes' );
 	}
 }
 

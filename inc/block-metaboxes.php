@@ -20,65 +20,61 @@ add_action('add_meta_boxes', 'blocks_metadata');
  */
 
 function blocks_single_pages() {
-	global $wpdb ,$post, $defined_areas;
+	global $wpdb ,$post;
 
 	$settings   = get_option('blocks');
-	$areas      = $settings['area'];
+	$areas      = $settings['areas'];
 	$types 	    = blocks_post_types();
 	$type_areas = array();
+	$area_types = array();
 	$postobject = $post; // Make a clone of the Post-Object
 
 	unset( $types['page'] );
 
 	foreach ( $types as $type ) {
-		$template = '';
-	
-		// Check single-templates, single-{post_type}.php -> single.php order
-		if( file_exists( TEMPLATEPATH .'/single-'. $type .'.php' ) ) {
-			$template = 'single-'. $type .'.php';
-		}
-		elseif( ( $type != 'post' && ( $type == 'attachment' || $type == 'page' ) ) && file_exists( TEMPLATEPATH .'/'. $type .'.php' ) ) {
-			$template = $type .'.php';
-		}
-		else {
-			$template = 'single.php';
-		}
+		$template = blocks_get_template_by_type( $type );
 
-		blocks_find_areas( array( 'area' => 'Block Areas' ), $template );
+		$defined_areas = blocks_find_areas( array( 'area' => 'Block Areas' ), $template );
 
 		foreach ( $defined_areas as $defined_area ) {
 			$type_areas[$defined_area][] = $type;
+			$area_types[$type][] = $defined_area;
 		}
 	}
 
 	// Return the available page templates
-	$templates            = get_page_templates();
-	$templates['default'] = 'page.php'; // Add default-page
+	$pageTemplates            = get_page_templates();
+	$pageTemplates['default'] = 'page.php'; // Add default-page
 	$template_areas       = array();
-	$templates_with_areas = array();
+	$pageTemplatesWithAreas = array();
 
-	foreach ( array_keys( $templates ) as $template ) {
+	foreach ( array_keys( $pageTemplates ) as $template ) {
 
-		blocks_find_areas( array( 'area' => 'Block Areas' ), $templates[$template] );
+		$defined_areas = blocks_find_areas( array( 'area' => 'Block Areas' ), $pageTemplates[$template] );
 
 		foreach ( $defined_areas as $defined_area ) {
 			if( $template == 'default' ) {
 				// If it's the default page, add "default" instead of template-filename
 				$template_areas[$defined_area][] = 'default';
-				$templates_with_areas[] = 'default';
+				$pageTemplatesWithAreas['default'][] = $defined_area;
 			}
 			else {
-				$template_areas[$defined_area][] = $templates[$template];
-				$templates_with_areas[] = $templates[$template];
+				$template_areas[$defined_area][] = $pageTemplates[$template];
+				$pageTemplatesWithAreas[$pageTemplates[$template]][] = $defined_area;
 			}
 		}
 	}
 
-	// Remove duplicates
-	$templates_with_areas = array_unique($templates_with_areas);
+	$templates['page'] = $pageTemplatesWithAreas;
+	$templates['post_type'] = $area_types;
 
+	// Remove duplicates
+	$pageTemplatesWithAreas = array_unique($pageTemplatesWithAreas);
+
+	//DEBUG
 	echo "<pre>";
-	$blockPages = array();
+
+	$postsWithoutAreas = array();
 		
 	// Get all post_id:s that have this post_id(block_id) and area
 	// Remove when WP_Query adds support for REGEX in meta_query
@@ -100,8 +96,7 @@ function blocks_single_pages() {
 		//'post__not_in' => $post_ids
 	);
 	
-	$blockPages = get_posts( $args );
-
+	$postsWithoutAreas = get_posts( $args );
 
 	$args = array(
 	   'post_type'    => 'page',
@@ -109,33 +104,70 @@ function blocks_single_pages() {
 	   //'post__not_in' => $post_ids,
 	   'meta_query'   => array(
 	       array(
-	           'value' => $templates_with_areas,
+	           'value' => array_keys($pageTemplatesWithAreas)
 	       )
 	   	)
 	 );
 
-	$query = new WP_Query( $args );
+	$templatePages = new WP_Query( $args );
 
 	// Merge page with custom post types
-	$blockPages = array_merge( $blockPages, $query->posts );
+	$postsWithoutAreas = array_merge( $postsWithoutAreas, $templatePages->posts );
 
-	// Sort array by key in reverse order
-	krsort( $blockPages);
+	// Variable not needed any more
+	unset($templatePages);
 
-	$children = array();
-	foreach ( $blockPages as $post ) {
-	    $children[$post->post_parent][] = $post;
+	// Sort array by key in reverse order to get latest first
+	krsort($postsWithoutAreas);
+	
+	$postsWithAreas = array();
+
+	foreach ($areas as $areaKey => $area) {
+		//TODO: Get correct prefix
+		$sql = 'SELECT post_id FROM kwido_postmeta WHERE meta_value REGEXP \'"'. $areaKey .'";a:[[:digit:]]+:{[^}]*"[[:digit:]]"\'';
+
+		// Get the SQL-result
+		$items = $wpdb->get_results( $sql, ARRAY_A );
+
+		foreach ($items as $item)
+		{
+			// Future fix so that pages that are already saved with blocks information may be removed
+			// if the template is changed without one or two block areas.
+
+			// Move the page to added posts
+			if(!array_key_exists($item["post_id"], $postsWithAreas))
+			{
+				foreach ($postsWithoutAreas as $blockPageKey => $blockPage)
+				{
+					if($blockPage->ID == $item["post_id"])
+					{
+						$postsWithAreas[$item["post_id"]] = array('post' => $blockPage);
+						unset($postsWithoutAreas[$blockPageKey]);
+						break;
+					}
+				}
+			}
+
+			if(array_key_exists($item["post_id"], $postsWithAreas)) {
+				$postsWithAreas[$item["post_id"]]['areas'][] = $areaKey;
+			}
+		}
 	}
 
-	echo "</pre>";
-	
-	//$area_exists = array();
-
-	// foreach ( $areas as $area ) {
-	// 	$area_exists[$area['area']] = ( ( isset($type_areas[$area['area']] ) && count( $type_areas[$area['area']] ) > 0 ) || ( isset($template_areas[$area['area']] ) && count( $template_areas[$area['area']] ) > 0 ) );
+	// $children = array();
+	// foreach ( $postsWithoutAreas as $post ) {
+	//     $children[$post->post_parent][] = $post;
 	// }
 
-	if( count($blockPages) > 0 ) {
+	// Disabled childrens-list with a simple hack! ;)
+	$postsNotAdded[0] = $postsWithoutAreas;
+	$postsAdded[0] = $postsWithAreas;
+
+	//print_r($templates);
+
+	echo "</pre>";
+
+	if( count( $postsNotAdded ) > 0 || count( $postsAdded ) > 0 ) {
 
 		$output = '<div id="blocks-area-control">';
 
@@ -149,53 +181,8 @@ function blocks_single_pages() {
 
 					$output .= '<ul class="list list-pages" data-action="update">';
 
-						#blocks_create_child_tree( 0, $output, $children );
-
-						$output .= '<li class="parent" data-id="1" data-area="left"><span title="Show children" class="block-parent"></span></span><p>Page parent</p><span title="Add this page" class="add"></span><span title="Add on areas" class="add-areas">Add on areas</span><span title="Remove" class="delete"></span>';
-							$output .= '<ul class="children">';
-								$output .= '<li data-id="2" data-area="left"></span><p>Page child</p><span title="Add this page" class="add"></span><span class="add-areas">Add on areas</span><span title="Remove" class="delete"></span></li>';
-								$output .= '<li data-id="3" data-area="left"></span><p>Page child</p><span title="Add this page" class="add"></span><span class="add-areas">Add on areas</span><span title="Remove" class="delete"></span></li>';
-								$output .= '<li data-id="4" data-area="left"></span><p>Page child</p><span title="Add this page" class="add"></span><span class="add-areas">Add on areas</span><span title="Remove" class="delete"></span></li>';
-								$output .= '<li data-id="5" data-area="left"></span><p>Page child</p><span title="Add this page" class="add"></span><span class="add-areas">Add on areas</span><span title="Remove" class="delete"></span></li>';
-								$output .= '<li data-id="6" data-area="left"></span><p>Page child</p><span title="Add this page" class="add"></span><span class="add-areas">Add on areas</span><span title="Remove" class="delete"></span></li>';
-								$output .= '<li data-id="7" data-area="left"></span><p>Page child</p><span title="Add this page" class="add"></span><span class="add-areas">Add on areas</span><span title="Remove" class="delete"></span></li>';
-							$output .= '</ul>';
-
-							$output .= '<ul class="areas">';
-								$output .= '<span></span>';
-								$output .= '<li title="Add on Left column"><span class="saved"></span>Left column</li>';
-								$output .= '<li title="Add on Right column"><span></span>Right column</li>';
-								$output .= '<li title="Add on Header"><span></span>Header</li>';
-							$output .= '</ul>';
-							
-						$output .= '</li>';
-
-						$output .= '<li data-id="1" data-area="left"></span><p>News 1</p><span title="Add this post" class="add"></span><span class="delete"></span><span title="Add on areas" class="add-areas">Add on areas</span><span title="Remove" class="delete"></span>';
-							$output .= '<ul class="areas">';
-								$output .= '<span></span>';
-								$output .= '<li title="Add on Left column"><span class="saved"></span>Left column</li>';
-								$output .= '<li title="Add on Right column"><span></span>Right column</li>';
-								$output .= '<li title="Add on Header"><span></span>Header</li>';
-							$output .= '</ul>';
-						$output .= '</li>';
-
-						$output .= '<li data-id="1" data-area="right"></span><p>News 2</p><span title="Add this post" class="add"></span><span title="Add on areas" class="add-areas">Add on areas</span><span title="Remove" class="delete"></span>';
-							$output .= '<ul class="areas">';
-								$output .= '<span></span>';
-								$output .= '<li title="Add on Left column"><span class="saved"></span>Left column</li>';
-								$output .= '<li title="Add on Right column"><span></span>Right column</li>';
-								$output .= '<li title="Add on Header"><span></span>Header</li>';
-							$output .= '</ul>';
-						$output .= '</li>';
-
-						$output .= '<li data-id="1" data-area="right"></span><p>News 3</p><span title="Add this post" class="add"></span><span title="Add on areas" class="add-areas">Add on areas</span><span title="Remove" class="delete"></span>';
-							$output .= '<ul class="areas">';
-								$output .= '<span></span>';
-								$output .= '<li title="Add on Left column"><span class="saved"></span>Left column</li>';
-								$output .= '<li title="Add on Right column"><span></span>Right column</li>';
-								$output .= '<li title="Add on Header"><span></span>Header</li>';
-							$output .= '</ul>';
-						$output .= '</li>';
+						// Full function not used yet, but just to present a flat list
+						blocks_create_child_tree( 0, $output, $postsNotAdded, $templates, $settings['areas'] );
 
 					$output .= '</ul>';
 
@@ -206,6 +193,7 @@ function blocks_single_pages() {
 				$output .= '<div class="posts-holder">';
 					$output .= '<ul class="list save-block" data-action="delete">';
 
+						blocks_create_child_tree( 0, $output, $postsAdded, $templates, $settings['areas'] );
 
 					$output .= '</ul>';
 				$output .= '</div>';
@@ -225,6 +213,105 @@ function blocks_single_pages() {
 
 }
 
+
+/** 
+ * Let's create a post_list
+ * @since 0.1
+ * @param string $post_id post id of the parent
+ * @param string $output 
+ * @param array $children all children_ids 
+ * @param array $area all available areas 
+ * @return post_list
+*/
+
+function blocks_create_child_tree( $parent_id, &$output, $children, $templates, $definedAreas ) {
+	if( isset( $children[$parent_id] ) ) {
+		
+		// Do not output children ul on root-level
+		if( $parent_id != 0 ) {
+			$output .= '<ul class="children">';
+		}
+
+		foreach ( $children[$parent_id] as $childTemp ) {
+			$child = null;
+			$savedAreas = array();
+
+			if( is_object( $childTemp )) {
+				// Normal post object
+				$child = $childTemp;
+			}
+			elseif( is_array( $childTemp )) {
+				// Array with saved information
+				$child = $childTemp['post'];
+				$savedAreas = $childTemp['areas'];
+			}
+			else {
+				return;
+			}
+
+			if( isset( $children[$child->ID] ) ) {
+				$output .= '<li class="parent" data-id="'. $child->ID .'">
+					<span class="block-parent"></span></span>
+						<p>'. get_the_title( $child->ID ) .'</p><span>'. __('Parent', 'blocks') .'
+					</span>
+				';
+			} else {
+				// Example output
+				// $output .= '<li data-id="1" data-area="left"></span><p>News 1</p><span title="Add this post" class="add"></span><span class="delete"></span><span title="Add on areas" class="add-areas">Add on areas</span><span title="Remove" class="delete"></span>';
+				// 	$output .= '<ul class="areas">';
+				// 		$output .= '<span></span>';
+				// 		$output .= '<li title="Add on Left column"><span class="saved"></span>Left column</li>';
+				// 		$output .= '<li title="Add on Right column"><span></span>Right column</li>';
+				// 		$output .= '<li title="Add on Header"><span></span>Header</li>';
+				// 	$output .= '</ul>';
+				// $output .= '</li>';
+
+				$output .= '<li data-id="'. $child->ID .'"><p>'. get_the_title( $child->ID ) .'</p><span>'. $child->post_type .'<span title="Add this post" class="add"></span><span class="delete"></span><span title="Add on areas" class="add-areas">Add on areas</span><span title="Remove" class="delete"></span>';
+				
+				$output .= '<ul class="areas">';
+				$output .= '<span></span>';
+
+				$templateAreas = array();	
+				
+				if($child->post_type == 'page')
+				{
+					$template = $template = get_post_meta( $child->ID, '_wp_page_template', true );
+
+					if(empty($template)) {
+						$template = 'default';
+					}
+
+					$templateAreas = $templates['page'][$template];
+				}
+				else
+				{
+					// Fetch the template for a post type
+					$templateAreas = $templates['post_type'][$child->post_type];
+				}
+
+				foreach ($templateAreas as $templateArea) {
+					$saved = '';
+
+					if( in_array($templateArea, $savedAreas)) {
+						$saved = ' class="saved"';
+					}
+
+					$output .= '<li title="Add on '.$definedAreas[$templateArea]['name'].'"><span'.$saved.'></span>'.$definedAreas[$templateArea]['name'].'</li>';
+				}
+
+				$output .= '</ul>';
+			}
+
+			$output .= blocks_create_child_tree( $child->ID, $output, $children, $templates, $definedAreas );
+
+			$output .= '</li>';
+		}
+		
+		if( $parent_id != 0 ) {
+			$output .= '</ul>';
+		}
+	}
+}
 
 /**
  * Add settings for single Block

@@ -23,19 +23,32 @@ add_action('add_meta_boxes', 'blocks_register_metaboxes');
 /**
  * List all the blocks
  * @since 0.1
- * @param string $post_id
+ * @param string $post
  * @return the Block-saving-areas and available Blocks 
  */
 
-function blocks_save_blocks( $post_id ) {
-	global $defined_areas;
+function blocks_save_blocks( $post ) {
 
 	$settings = get_option('blocks');
 
-	$areas = $settings['area'];
+	$areas = $settings['areas'];
 
 	// Get the Blocks id:s
-	$blocks_id = get_post_meta( $post_id->ID, '_blocks', true );
+	$blocks_id = get_post_meta( $post->ID, '_blocks', true );
+
+	$postType = get_post_type( $post->ID );
+	$templateFile = '';
+	
+	if ($postType == 'page') {
+		$template = blocks_get_template_by_page_id( $post->ID );
+
+		$templateFile = $template;
+	}
+	else {
+		$templateFile = blocks_get_template_by_type( $postType ) ;
+	}
+
+	$defined_areas = blocks_find_areas( array( 'area' => 'Block Areas' ), $templateFile );
 
 	// Hook into blocks_types_metabox
 	// If you want to modify the output of metaboxes
@@ -95,9 +108,9 @@ function blocks_save_blocks( $post_id ) {
 
 		$output .= '<div class="blocks-wrap">';
 
-			foreach ( $areas as $area ) {
+			foreach ( $areas as $areaKey => $area ) {
 
-				if( in_array( $area['area'], $defined_areas ) ) {
+				if( in_array( $areaKey, $defined_areas ) ) {
 					$output .= '<div class="blocks-holder">';
 
 						$output .= '<div class="blocks-title">';
@@ -107,14 +120,14 @@ function blocks_save_blocks( $post_id ) {
 							$output .= '</div>';
 						$output .= '</div>';
 						
-						$output .= '<ul class="blocks-area blocks-' . $area['area'] . '" data-area="' . $area['area'] . '">';
+						$output .= '<ul class="blocks-area blocks-' . $areaKey . '" data-area="' . $areaKey . '">';
 
-							if( ! empty( $blocks_id[ $area['area'] ] ) ) {
+							if( ! empty( $blocks_id[ $areaKey ] ) ) {
 								$args = array(
 									'post_type'		 =>	'blocks',
 									'posts_per_page' => '-1',
 									'orderby'		 => 'post__in',
-									'post__in'		 => $blocks_id[ $area['area'] ]
+									'post__in'		 => $blocks_id[ $areaKey ]
 								);
 
 								$query = new WP_Query( $args );

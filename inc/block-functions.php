@@ -15,6 +15,32 @@ function blocks_post_types() {
 	return $post_types;
 }
 
+function blocks_get_template_by_type( $type ) {
+	$template = '';
+
+	// Check single-templates, single-{post_type}.php -> single.php order
+	if( file_exists( TEMPLATEPATH .'/single-'. $type .'.php' ) ) {
+		$template = 'single-'. $type .'.php';
+	}
+	elseif( ( $type != 'post' && ( $type == 'attachment' || $type == 'page' ) ) && file_exists( TEMPLATEPATH .'/'. $type .'.php' ) ) {
+		$template = $type .'.php';
+	}
+	else {
+		$template = 'single.php';
+	}
+
+	return $template;
+}
+
+function blocks_get_template_by_page_id( $page_id ) {
+	$template = get_post_meta( $page_id, '_wp_page_template', true );
+
+	if( ( empty( $template ) || 'default' == $template ) ) {
+		$template = 'page.php';
+	}
+
+	return $template;
+}
 
 /**
  * Delete blocks transients
@@ -166,7 +192,6 @@ function blocks_shortcode( $atts ) {
 }
 add_shortcode( 'block', 'blocks_shortcode' );
 
-
 /**
  * Retrieve the path of the highest priority template file that exists.
  * Parse the blocks contents to retrieve blocks's metadata.
@@ -174,39 +199,39 @@ add_shortcode( 'block', 'blocks_shortcode' );
  * @since 0.1
  */
 
-function blocks_get_defined_areas() {
-	global $post, $pagenow;
+// function blocks_get_defined_areas() {
+// 	global $post, $pagenow;
 
-	$settings = get_option('blocks');
+// 	$settings = get_option('blocks');
 
-	if( $pagenow == 'post.php' ) {
+// 	if( $pagenow == 'post.php' ) {
 
-		$template = get_post_meta( $post->ID, '_wp_page_template', true );
+// 		$template = get_post_meta( $post->ID, '_wp_page_template', true );
 
-		// Check page-templates, if not set -> page.php
-		if( $post->post_type == 'page' && ( empty( $template ) || 'default' == $template ) ) {
-			$template = 'page.php';
-		}
-		elseif( empty( $template ) ) {
-			// Check single-templates, single-{post_type}.php -> single.php order
-			if( file_exists( TEMPLATEPATH .'/single-'. $post->post_type .'.php' ) ) {
-				$template = 'single-'. $post->post_type .'.php';
-			}
-			elseif( ( $post->post_type == 'attachment' || $post->post_type == 'page' ) && file_exists( TEMPLATEPATH .'/'. $post->post_type .'.php' ) ) {
-				$template = $post->post_type .'.php';
-			}
-			elseif( $post->post_type == 'attachment' ) {
-				$template = '';
-			}
-			else {
-				$template = 'single.php';
-			}
-		}
+// 		// Check page-templates, if not set -> page.php
+// 		if( $post->post_type == 'page' && ( empty( $template ) || 'default' == $template ) ) {
+// 			$template = 'page.php';
+// 		}
+// 		elseif( empty( $template ) ) {
+// 			// Check single-templates, single-{post_type}.php -> single.php order
+// 			if( file_exists( TEMPLATEPATH .'/single-'. $post->post_type .'.php' ) ) {
+// 				$template = 'single-'. $post->post_type .'.php';
+// 			}
+// 			elseif( ( $post->post_type == 'attachment' || $post->post_type == 'page' ) && file_exists( TEMPLATEPATH .'/'. $post->post_type .'.php' ) ) {
+// 				$template = $post->post_type .'.php';
+// 			}
+// 			elseif( $post->post_type == 'attachment' ) {
+// 				$template = '';
+// 			}
+// 			else {
+// 				$template = 'single.php';
+// 			}
+// 		}
 
-		blocks_find_areas( array( 'area' => 'Block Areas' ), $template );
-	}
-}
-add_action( 'admin_head', 'blocks_get_defined_areas' );
+// 		return blocks_find_areas( array( 'area' => 'Block Areas' ), $template );
+// 	}
+// }
+// add_action( 'admin_head', 'blocks_get_defined_areas' );
 
 
 /** 
@@ -218,56 +243,13 @@ add_action( 'admin_head', 'blocks_get_defined_areas' );
 */
 
 function blocks_find_areas( $find, $template ) {
-	global $defined_areas;
-	
 	$defined_areas = get_file_data( TEMPLATEPATH .'/' . $template, $find );
 
 	// have to look this over
 	$defined_areas = array_filter( array_map( 'trim', explode( ',', strtolower( $defined_areas['area'] ) ) ) );
 
 	return $defined_areas;
-}
-
-
-/** 
- * Let's create a post_list
- * @since 0.1
- * @param string $post_id post id of the parent
- * @param string $output 
- * @param array $children all children_ids 
- * @param array $area all available areas 
- * @return post_list
-*/
-
-function blocks_create_child_tree( $post_id, &$output, $children ) {
-	if( isset( $children[$post_id] ) ) {
-		
-		if( $post_id != 0 ) {
-			$output .= '<ul class="children">';
-		}
-
-		foreach ( $children[$post_id] as $child ) {
-			if( isset( $children[$child->ID] ) ) {
-				$output .= '<li class="parent" data-id="'. $child->ID .'">
-					<span class="block-parent"></span></span>
-						<p>'. get_the_title( $child->ID ) .'</p><span>'. __('Parent', 'blocks') .'
-					</span>
-				';
-			} else {
-				$output .= '<li data-id="'. $child->ID .'"><p>'. get_the_title( $child->ID ) .'</p><span>'. $child->post_type .'</span>';
-			}
-
-			$output .= blocks_create_child_tree( $child->ID, $output, $children );
-
-			$output .= '</li>';
-		}
-		
-		if( $post_id != 0 ) {
-			$output .= '</ul>';
-		}
-	}
-}
-
+}		
 
 /** 
  * Remove blocks data from db
