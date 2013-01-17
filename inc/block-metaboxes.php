@@ -104,33 +104,28 @@ function blocks_single_pages() {
 	$postsWithAreas = array();
 
 
-	foreach ($areas as $areaKey => $area) {
-		//TODO: Get correct prefix
-		$sql = 'SELECT post_id FROM kwido_postmeta WHERE meta_value REGEXP \'"'. $areaKey .'";a:[[:digit:]]+:{[^}]*"[[:digit:]]"\'';
+	foreach ( $areas as $areaKey => $area ) {
+		$sql = 'SELECT post_id FROM ' . $wpdb->prefix . 'postmeta WHERE meta_value REGEXP \'"'. $areaKey .'";a:[[:digit:]]+:{[^}]*"[[:digit:]]"\'';
 
 		// Get the SQL-result
 		$items = $wpdb->get_results( $sql, ARRAY_A );
 
-		foreach ($items as $item)
-		{
+		foreach ( $items as $item ) {
 			// Future fix so that pages that are already saved with blocks information may be removed
 			// if the template is changed without one or two block areas.
 
 			// Move the page to added posts
-			if(!array_key_exists($item["post_id"], $postsWithAreas))
-			{
-				foreach ($postsWithoutAreas as $blockPageKey => $blockPage)
-				{
-					if($blockPage->ID == $item["post_id"])
-					{
+			if( !array_key_exists( $item["post_id"], $postsWithAreas ) ) {
+				foreach ( $postsWithoutAreas as $blockPageKey => $blockPage ) {
+					if( $blockPage->ID == $item["post_id"] ) {
 						$postsWithAreas[$item["post_id"]] = array('post' => $blockPage);
-						unset($postsWithoutAreas[$blockPageKey]);
+						unset( $postsWithoutAreas[$blockPageKey] );
 						break;
 					}
 				}
 			}
 
-			if(array_key_exists($item["post_id"], $postsWithAreas)) {
+			if( array_key_exists( $item["post_id"], $postsWithAreas ) ) {
 				$postsWithAreas[$item["post_id"]]['areas'][] = $areaKey;
 			}
 		}
@@ -223,49 +218,54 @@ function blocks_create_child_tree( $parent_id, &$output, $children, $templates, 
 			}
 
 			if( isset( $children[$child->ID] ) ) {
-				$output .= '<li class="parent" data-id="'. $child->ID .'">
-					<span class="block-parent"></span></span>
-						<p>'. get_the_title( $child->ID ) .'</p><span>'. __('Parent', 'blocks') .'
-					</span>
-				';
-			} else {
-				$output .= '<li data-id="'. $child->ID .'"></span><p>'. get_the_title( $child->ID ) .'</p><span title="'. __('Add this', '') .' '. $child->post_type .'" class="add"></span><span class="delete"></span><span title="Add on areas" class="add-areas">'. __('Add on areas', 'blocks') .'</span><span title="Remove" class="delete"></span>';
+				$output .= '<li class="parent" data-id="'. $child->ID .'">';
+					$output .= '<span class="block-parent"></span></span>';
+						$output .= '<p>'. get_the_title( $child->ID ) .'</p><span>'. __('Parent', 'blocks') .'';
+					$output .= '</span>';
+				$output .= '</li>';
 				
-				$output .= '<ul class="areas">';
-				$output .= '<span></span>';
-
-				$templateAreas = array();	
+			} 
+			else {
+				$output .= '<li data-id="'. $child->ID .'">';
+					$output .= '<p>'. get_the_title( $child->ID ) .'</p>';
+					$output .= '<span title="'. __('Add this', '') .' '. $child->post_type .'" class="add"></span>';
+					$output .= '<span class="delete"></span>';
+					$output .= '<span title="Add on areas" class="add-areas">'. __('Add on areas', 'blocks') .'</span>';
+					$output .= '<span title="Remove" class="delete"></span>';
 				
-				if($child->post_type == 'page')
-				{
-					$template = $template = get_post_meta( $child->ID, '_wp_page_template', true );
+					$output .= '<ul class="areas">';
+					$output .= '<span></span>';
 
-					if(empty($template)) {
-						$template = 'default';
+					$templateAreas = array();	
+					
+					if( $child->post_type == 'page' ) {
+						$template = $template = get_post_meta( $child->ID, '_wp_page_template', true );
+
+						if( empty( $template ) ) {
+							$template = 'default';
+						}
+
+						$templateAreas = $templates['page'][$template];
+					}
+					else {
+						// Fetch the template for a post type
+						$templateAreas = $templates['post_type'][$child->post_type];
 					}
 
-					$templateAreas = $templates['page'][$template];
-				}
-				else
-				{
-					// Fetch the template for a post type
-					$templateAreas = $templates['post_type'][$child->post_type];
-				}
+					foreach ( $templateAreas as $templateArea ) {
+						$saved = '';
 
-				foreach ($templateAreas as $templateArea) {
-					$saved = '';
+						if( in_array( $templateArea, $savedAreas ) ) {
+							$saved = ' class="saved"';
+						}
 
-					if( in_array($templateArea, $savedAreas)) {
-						$saved = ' class="saved"';
+						$output .= '<li title="Add on '.$definedAreas[$templateArea]['name'].'"><span'.$saved.'></span>'.$definedAreas[$templateArea]['name'].'</li>';
 					}
 
-					$output .= '<li title="Add on '.$definedAreas[$templateArea]['name'].'"><span'.$saved.'></span>'.$definedAreas[$templateArea]['name'].'</li>';
+					$output .= '</ul>';
 				}
 
-				$output .= '</ul>';
-			}
-
-			$output .= blocks_create_child_tree( $child->ID, $output, $children, $templates, $definedAreas );
+				$output .= blocks_create_child_tree( $child->ID, $output, $children, $templates, $definedAreas );
 
 			$output .= '</li>';
 		}
