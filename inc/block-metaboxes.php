@@ -115,18 +115,18 @@ function blocks_single_pages() {
 			// if the template is changed without one or two block areas.
 
 			// Move the page to added posts
-			if( !array_key_exists( $item["post_id"], $postsWithAreas ) ) {
+			if( !array_key_exists( $item['post_id'], $postsWithAreas ) ) {
 				foreach ( $postsWithoutAreas as $blockPageKey => $blockPage ) {
-					if( $blockPage->ID == $item["post_id"] ) {
-						$postsWithAreas[$item["post_id"]] = array('post' => $blockPage);
+					if( $blockPage->ID == $item['post_id'] ) {
+						$postsWithAreas[$item['post_id']] = array('post' => $blockPage);
 						unset( $postsWithoutAreas[$blockPageKey] );
 						break;
 					}
 				}
 			}
 
-			if( array_key_exists( $item["post_id"], $postsWithAreas ) ) {
-				$postsWithAreas[$item["post_id"]]['areas'][] = $areaKey;
+			if( array_key_exists( $item['post_id'], $postsWithAreas ) ) {
+				$postsWithAreas[$item['post_id']]['areas'][] = $areaKey;
 			}
 		}
 	}
@@ -208,7 +208,7 @@ function blocks_create_child_tree( $parent_id, &$output, $children, $templates, 
 				// Normal post object
 				$child = $childTemp;
 			}
-			elseif( is_array( $childTemp )) {
+			elseif( is_array( $childTemp ) ) {
 				// Array with saved information
 				$child = $childTemp['post'];
 				$savedAreas = $childTemp['areas'];
@@ -217,50 +217,50 @@ function blocks_create_child_tree( $parent_id, &$output, $children, $templates, 
 				return;
 			}
 
-			if( isset( $children[$child->ID] ) ) {
-				$output .= '<li class="parent" data-id="'. $child->ID .'">';
-					$output .= '<span class="block-parent"></span></span>';
-						$output .= '<p>'. get_the_title( $child->ID ) .'</p><span>'. __('Parent', 'blocks') .'';
-					$output .= '</span>';
-				$output .= '</li>';
+			// if( isset( $children[$child->ID] ) ) {
+			// 	$output .= '<li class="parent" data-id="'. $child->ID .'">';
+			// 		$output .= '<span class="block-parent"></span></span>';
+			// 			$output .= '<p>'. get_the_title( $child->ID ) .'</p><span>'. __('Parent', 'blocks') .'';
+			// 		$output .= '</span>';
+			// 	$output .= '</li>';
 				
-			} 
-			else {
+			// } 
+			// else {
 				$output .= '<li data-id="'. $child->ID .'">';
 					$output .= '<p>'. get_the_title( $child->ID ) .'</p>';
 					$output .= '<span title="'. __('Add this', '') .' '. $child->post_type .'" class="add"></span>';
 					$output .= '<span class="delete"></span>';
-					$output .= '<span title="Add on areas" class="add-areas">'. __('Add on areas', 'blocks') .'</span>';
-					$output .= '<span title="Remove" class="delete"></span>';
+					$output .= '<span title="'. __('Add on areas', 'blocks') .'" class="add-areas">'. __('Add on areas', 'blocks') .'</span>';
+					$output .= '<span title="'. __('Remove', 'blocks') .'" class="delete"></span>';
 				
 					$output .= '<ul class="areas">';
-					$output .= '<span></span>';
+						$output .= '<span></span>';
 
-					$templateAreas = array();	
-					
-					if( $child->post_type == 'page' ) {
-						$template = $template = get_post_meta( $child->ID, '_wp_page_template', true );
+						$templateAreas = array();	
+						
+						if( $child->post_type == 'page' ) {
+							$template = $template = get_post_meta( $child->ID, '_wp_page_template', true );
 
-						if( empty( $template ) ) {
-							$template = 'default';
+							if( empty( $template ) ) {
+								$template = 'default';
+							}
+
+							$templateAreas = $templates['page'][$template];
+						}
+						else {
+							// Fetch the template for a post type
+							$templateAreas = $templates['post_type'][$child->post_type];
 						}
 
-						$templateAreas = $templates['page'][$template];
-					}
-					else {
-						// Fetch the template for a post type
-						$templateAreas = $templates['post_type'][$child->post_type];
-					}
+						foreach ( $templateAreas as $templateArea ) {
+							$saved = '';
 
-					foreach ( $templateAreas as $templateArea ) {
-						$saved = '';
+							if( in_array( $templateArea, $savedAreas ) ) {
+								$saved = ' class="saved"';
+							}
 
-						if( in_array( $templateArea, $savedAreas ) ) {
-							$saved = ' class="saved"';
+							$output .= '<li data-area="'. $definedAreas[$templateArea]['name'] .'" title="Add on '. $definedAreas[$templateArea]['name'] .'"><span'. $saved .'></span>'. $definedAreas[$templateArea]['name'] .'</li>';
 						}
-
-						$output .= '<li title="Add on '.$definedAreas[$templateArea]['name'].'"><span'.$saved.'></span>'.$definedAreas[$templateArea]['name'].'</li>';
-					}
 
 					$output .= '</ul>';
 				}
@@ -268,7 +268,7 @@ function blocks_create_child_tree( $parent_id, &$output, $children, $templates, 
 				$output .= blocks_create_child_tree( $child->ID, $output, $children, $templates, $definedAreas );
 
 			$output .= '</li>';
-		}
+		// }
 		
 		if( $parent_id != 0 ) {
 			$output .= '</ul>';

@@ -231,6 +231,42 @@ function blocks_settings_page() {
 									</td>
 
 								</tr>
+
+
+
+								<tr>
+									<th scope="row">
+										<h3><?php _e('Control Post Types', 'blocks'); ?>.</h3>
+										<p>
+											<?php _e('Enable or disable blocks on specific post type', 'blocks'); ?>.
+										</p>
+									</th>
+
+									<td>
+										<div class="wp-box">
+											<table class="widefat post-types">
+												<thead>
+													<tr>
+														<th><?php _e('Post type', 'blocks'); ?></th>
+														<th><?php _e('Status', 'blocks'); ?></th>
+														<th><?php _e('Update', 'blocks'); ?></th>
+													</tr>
+												</thead>
+												<tbody>
+													<?php foreach( blocks_post_types() as $post_type ) : ?>
+														<tr>
+															<td><?php echo ucfirst( $post_type ); ?></td>
+															<td><span class="status active"><?php _e('Active', 'blocks'); ?></span></td>
+															<td><a class="button blocks-remove-area"><?php _e('Activate', 'blocks'); ?></a></td>
+														</tr>
+													<?php endforeach; ?>
+													
+												</tbody>
+											</table>
+										</div>
+									</td>
+
+								</tr>
 								
 							</tbody>
 						</table>
