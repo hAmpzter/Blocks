@@ -64,12 +64,12 @@ function blocks_single_pages() {
 			}
 		}
 	}
-
 	$templates['page'] = $pageTemplatesWithAreas;
 	$templates['post_type'] = $area_types;
 
 	// Remove duplicates
-	$pageTemplatesWithAreas = array_unique($pageTemplatesWithAreas);
+	// WHY IS THIS HERE??????????????????????
+	//$pageTemplatesWithAreas = array_unique( $pageTemplatesWithAreas );
 
 	$postsWithoutAreas = array();
 		
@@ -100,8 +100,9 @@ function blocks_single_pages() {
 
 	// Sort array by key in reverse order to get latest first
 	krsort( $postsWithoutAreas );
-	
+
 	$postsWithAreas = array();
+
 
 	foreach ($areas as $areaKey => $area) {
 		//TODO: Get correct prefix

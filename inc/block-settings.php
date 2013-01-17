@@ -40,17 +40,17 @@ function blocks_save_plugin_options() {
 	$settings = get_option( 'blocks' );
 
 	$tmp_area = ( isset( $_POST['areas'] ) ? $_POST['areas'] : '' );
-		
-	if( $tmp_area ) { 
+	
+	$areas = array();
 
-		$areas   = array();
+	if( ! empty( $tmp_area ) ) { 
 
-		for ( $i = count( $tmp_area['areas'] ) - 1; $i > 0; $i-- ) {
+		for ( $i = count( $tmp_area['area'] ) - 1; $i >= 0; $i-- ) {
 			$area  = $tmp_area['area'][$i];
 			$name  = $tmp_area['name'][$i];
 			$desc  = $tmp_area['desc'][$i];
 
-			if( !array_key_exists($area, $areas) && blocks_check_area_values( $area, $name, $desc ) ) {
+			if( !array_key_exists( $area, $areas ) && blocks_check_area_values( $area, $name, $desc ) ) {
 				$areas[$area] = array(
 					'name' => $name,
 					'desc' => $desc
@@ -134,7 +134,7 @@ function blocks_settings_page() {
 		?>
 
 		<div id="poststuff">
-			<form method="post" action="<?php admin_url( 'edit.php?post_type=blocks&page=blocks-settings' ); ?>">
+			<form method="post" action="<?php network_admin_url( 'edit.php?post_type=blocks&page=blocks-settings' ); ?>">
 				<?php
 				wp_nonce_field( "blocks-settings-page" ); 
 				
@@ -210,16 +210,16 @@ function blocks_settings_page() {
 												</thead>
 												<tbody>
 													<tr class="blocks-area-row">
-														<td><input type="text" name="area[area][]" placeholder="<?php _e('Key','blocks'); ?>" /></td>
-														<td><input type="text" name="area[name][]" placeholder="<?php _e('Name','blocks'); ?>" /></td>
-														<td><input type="text" name="area[desc][]" placeholder="<?php _e('Description','blocks'); ?>" /></td>
+														<td><input type="text" name="areas[area][]" placeholder="<?php _e('Key','blocks'); ?>" /></td>
+														<td><input type="text" name="areas[name][]" placeholder="<?php _e('Name','blocks'); ?>" /></td>
+														<td><input type="text" name="areas[desc][]" placeholder="<?php _e('Description','blocks'); ?>" /></td>
 													</tr>
 													<?php foreach ($areas as $areaKey => $area) : ?>
 														<tr class="blocks-area-row">
-															<td><input type="text" name="area[area][]" value="<?php echo $areaKey; ?>" /></td>
-															<td><input type="text" name="area[name][]" value="<?php echo $area['name']; ?>" /></td>
+															<td><input type="text" name="areas[area][]" value="<?php echo $areaKey; ?>" /></td>
+															<td><input type="text" name="areas[name][]" value="<?php echo $area['name']; ?>" /></td>
 															<td>
-																<input type="text" name="area[desc][]" value="<?php echo $area['desc']; ?>" />
+																<input type="text" name="areas[desc][]" value="<?php echo $area['desc']; ?>" />
 																<a class="button blocks-remove-area"><?php _e('Remove', 'blocks'); ?></a>
 															</td>
 														</tr>
