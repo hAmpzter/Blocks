@@ -232,7 +232,7 @@ function blocks_settings_page() {
 
 								</tr>
 
-
+								<!-- 
 
 								<tr>
 									<th scope="row">
@@ -264,7 +264,9 @@ function blocks_settings_page() {
 												</tbody>
 											</table>
 										</div>
-									</td>
+									</td> 
+
+									-->
 
 								</tr>
 								

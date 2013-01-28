@@ -265,7 +265,7 @@ function blocks_create_child_tree( $parent_id, &$output, $children, $templates, 
 					$output .= '</ul>';
 				}
 
-				$output .= blocks_create_child_tree( $child->ID, $output, $children, $templates, $definedAreas );
+			#	$output .= blocks_create_child_tree( $child->ID, $output, $children, $templates, $definedAreas );
 
 			$output .= '</li>';
 		// }
