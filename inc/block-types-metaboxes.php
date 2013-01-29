@@ -167,6 +167,8 @@ function blocks_save_blocks( $post ) {
 				}
 			}	
 
+		$output .= '</div>';
+
 		echo $output;
 	}
 }
