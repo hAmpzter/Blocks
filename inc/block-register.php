@@ -104,9 +104,13 @@ add_filter('post_updated_messages', 'blocks_update_messages');
 
 function blocks_wp_admin_style() {
     wp_register_style( 'blocks_admin_css', BLOCKS_URL . '/assets/css/blocks.css', false, '0.1' );
+    wp_register_script( 'blocks_list_js', BLOCKS_URL . '/assets/js/vendors/list.js', false, '0.1', true );
+    wp_register_script( 'blocks_list_paging_js', BLOCKS_URL . '/assets/js/vendors/list.paging.js', false, '0.1', true );
     wp_register_script( 'blocks_admin_js', BLOCKS_URL . '/assets/js/blocks.js', false, '0.1', true );
 
     wp_enqueue_script( 'wp-pointer' );
+    wp_enqueue_script( 'blocks_list_js' );
+    wp_enqueue_script( 'blocks_list_paging_js' );
     wp_enqueue_script( 'blocks_admin_js' );
     wp_enqueue_style( 'blocks_admin_css' );
     wp_enqueue_style( 'wp-pointer' );

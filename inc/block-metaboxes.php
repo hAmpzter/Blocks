@@ -131,7 +131,7 @@ function blocks_single_pages() {
 		}
 	}
 
-	// Disabled childrens-list with a simple hack! ;)
+	// Disabled childrens-list with a simple "hack"! ;)
 	$postsNotAdded[0] = $postsWithoutAreas;
 	$postsAdded[0] = $postsWithAreas;
 

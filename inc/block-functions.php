@@ -75,51 +75,75 @@ add_action('wp_ajax_empty_cache', 'blocks_flush_transients');
  * @since 0.1
  */
 
-function blocks_save_metadata() {
+function blocks_save_metadata($post_id) {
 
-	$post_id = $_POST['post_id'];
+	//$post_id = $_POST['post_id'];
 
 	// check if user has the rights
-	if ( ! current_user_can('edit_page', $post_id ) ) {
+	if ( ! current_user_can('edit_page', $post_id ) )
+	{
 		die( __("You don't have premission to edit or create blocks", 'blocks') );
 	}
 
 	// set post ID if is a revision
-	if ( wp_is_post_revision( $post_id ) ) {
+	if ( wp_is_post_revision( $post_id ) )
+	{
 	    $post_id = wp_is_post_revision( $post_id );
 	}
 
-	if( isset( $post_id ) ) {
-
+	if( isset( $post_id ) )
+	{
 		$data 	  = get_post_meta( $post_id, '_blocks', true );
-	    $area 	  = $_POST['area'];
-	    $order    = trim( $_POST['order'] ); // we check on empty array but explode always return one item
-	    $blocks   = explode( ',', $order );
+	    $areas	  = isset($_POST['blocks']) ? $_POST['blocks'] : '';
 
-		if( ! empty( $order ) ) {
-			$data[$area] = array_unique( $blocks );
-		}
-		else {
-			unset( $data[$area] );
+	    if( !empty($data) )
+	    {
+	    	$data = array();
+	    }
+
+	    if( !empty($areas) )
+	    {
+		    foreach ($areas as $areaKey => $area)
+		    {
+		    	$order    = trim( $area['data'] ); // we check on empty array but explode always return one item
+		   		$blocks   = explode( ',', $order );
+
+		   		if( !empty( $order ) )
+		   		{
+					$data[$areaKey] = array_unique( $blocks );
+				}
+				else if ( isset( $data[$areaKey] ) )
+				{
+					unset( $data[$areaKey] );
+				}
+		    }
+
+			if( !empty($data) && count($data) > 0 )
+			{
+				foreach( $data as $key => $value )
+				{
+		    		if( empty( $value ) || ( is_array( $value ) && count( $value ) == 0 ) )
+		    		{
+		       			unset( $data[$key] );
+		    		}
+				}
+			}
 		}
 
-		foreach( $data as $key => $value ) {
-    		if( empty( $value ) || ( is_array( $value ) && count( $value ) == 0 ) ) {
-       			unset( $data[$key] );
-    		}
-		}
-
-		if( count( $data ) > 0 ) {
+		if( count($data) > 0 )
+		{
 			update_post_meta( $post_id,'_blocks', $data );
 		}
-		else {
+		else
+		{
 			delete_post_meta( $post_id,'_blocks' );
 		}
-	
-	    die;
 	}
+
+	return true;
 }
-add_action('wp_ajax_save_blocks', 'blocks_save_metadata');
+add_action('save_post','blocks_save_metadata');
+//add_action('wp_ajax_save_blocks', 'blocks_save_metadata');
 
 
 /**
@@ -129,7 +153,6 @@ add_action('wp_ajax_save_blocks', 'blocks_save_metadata');
  */
      
 function blocks_save_blocks_meta( $post_id ) {
-
 	// check if user has the rights
 	if ( isset( $_POST['post_type'] ) == 'blocks' && ! current_user_can('edit_page', $post_id ) ) {
 		die( __("You don't have premission to edit or create blocks", 'blocks') );

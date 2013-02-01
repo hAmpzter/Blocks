@@ -55,7 +55,24 @@ function blocks_save_blocks( $post ) {
 	do_action('blocks_types_metabox');
 
 	if( $defined_areas ) {
-		$output = '<div class="header">';
+		$output = '';
+
+		// Output the hidden divs for each area defined on page
+		foreach ( $areas as $areaKey => $area ) {
+			if( in_array( $areaKey, $defined_areas ) ) {
+				$data = '';
+
+				if ( isset($blocks_id[ $areaKey ]) )
+				{
+					$data = join(',', $blocks_id[ $areaKey ]);
+				}
+
+				$output .= '<input type="hidden" class="tags-input" name="blocks[' . $areaKey . '][data]" value="' . $data . '" />';
+				//$output .= '<input type="hidden" class="tags-input" name="blocks[' . $areaKey . '][order]" value="' . $data . '" />';
+			}
+		}
+
+		$output .= '<div class="header">';
 			$output .= '<span>'. __('Blocks', 'blocks'). '</span>';
 			$output .='<input class="search" placeholder="' . __('Search blocks','blocks') . '.." />';
 		$output .= '</div>';

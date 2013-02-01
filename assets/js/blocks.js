@@ -83,28 +83,32 @@ jQuery(document).ready(function($) {
             data.push($(this).attr('data-id'));
         });
 
-        opts = {
-            url: ajaxurl,
-            type: 'POST',
-            async: true,
-            cache: false,
-            dataType: 'json',
-            data:{
-                action: 'save_blocks', 
-                post_id: $('#post_ID').val(),
-                order: data.join(),
-                area: area.attr('data-area')
-            },
+        var inputData = $('input[type=hidden][name^="blocks[' + area.attr('data-area') + '][data]"]')
 
-            beforeSend: function() {
-                $('.paging-holder').append('<div class="loading"></div>');
-            },
+        inputData.val(data.join());
 
-            complete: function() { 
-                $('.loading').remove();
-            },
-        };
-        $.ajax(opts);
+        // opts = {
+        //     url: ajaxurl,
+        //     type: 'POST',
+        //     async: true,
+        //     cache: false,
+        //     dataType: 'json',
+        //     data:{
+        //         action: 'save_blocks', 
+        //         post_id: $('#post_ID').val(),
+        //         order: data.join(),
+        //         area: area.attr('data-area')
+        //     },
+
+        //     beforeSend: function() {
+        //         $('.paging-holder').append('<div class="loading"></div>');
+        //     },
+
+        //     complete: function() { 
+        //         $('.loading').remove();
+        //     },
+        // };
+        // $.ajax(opts);
     }
 
 
